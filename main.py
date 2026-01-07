@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from database import init_db
-from routes import teams
+from routes import events, teams
 
 app = FastAPI(
     title="Challenge Hub",
@@ -32,4 +32,5 @@ def health_check():
     return {"status": "healthy"}
 
 
+app.include_router(events.router)
 app.include_router(teams.router)
