@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException
 
+from config import settings
 from database import get_connection
 from models import TeamCreate, TeamUpdate, TeamResponse
 
@@ -23,6 +24,13 @@ def create_team(team: TeamCreate):
         cursor.execute("SELECT id FROM teams WHERE name = ?", (team.name,))
         if cursor.fetchone():
             raise HTTPException(status_code=409, detail="Team name already exists")
+
+        # Check team size
+        if len(team.members) > settings.default_max_team_size:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Team exceeds max size of {settings.default_max_team_size}",
+            )
 
         cursor.execute(
             """
@@ -92,6 +100,13 @@ def update_team(team_id: str, update: TeamUpdate):
 
         if not row:
             raise HTTPException(status_code=404, detail="Team not found")
+
+        # Check team size
+        if update.members is not None and len(update.members) > settings.default_max_team_size:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Team exceeds max size of {settings.default_max_team_size}",
+            )
 
         new_members = update.members if update.members is not None else json.loads(row["members"])
 
