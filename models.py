@@ -1,13 +1,15 @@
 from datetime import datetime
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
 # --- Hints ---
 
 class Hint(BaseModel):
-    order: int
-    text: str
-    cost: int
+    order: int = Field(..., ge=1)
+    text: str = Field(..., min_length=1)
+    cost: int = Field(..., ge=0)
 
 
 # --- Challenges ---
@@ -17,8 +19,8 @@ class Challenge(BaseModel):
     title: str
     description: str
     category: str
-    points: int
-    validation_type: str  # "exact" or "regex"
+    points: int = Field(..., ge=0)
+    validation_type: Literal["exact", "regex"]
     expected_answer: str
     hints: list[Hint] = []
 
@@ -81,7 +83,7 @@ class EventResponse(BaseModel):
     end_time: datetime
     max_team_size: int
     challenge_ids: list[str]
-    status: str  # "upcoming", "active", "ended"
+    status: Literal["upcoming", "active", "ended"]
 
 
 # --- Gameplay ---
