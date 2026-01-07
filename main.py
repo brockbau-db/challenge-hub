@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
+from database import init_db
 
 app = FastAPI(
     title="Challenge Hub",
@@ -16,6 +17,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def startup_event():
+    """Initialize database on startup."""
+    init_db()
 
 
 @app.get("/health")
