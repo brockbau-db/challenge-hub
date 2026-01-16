@@ -1,0 +1,249 @@
+version: "1.0"
+
+categories:
+  - id: sql
+    name: SQL & Analytics
+  - id: ai_ml
+    name: AI & Machine Learning
+  - id: data-engineering
+    name: Data Engineering
+  - id: admin
+    name: Platform Administration
+
+challenges:
+  # =============================================================================
+  # SQL & Analytics (sql-001 to sql-015)
+  # =============================================================================
+
+  - id: sql-001
+    title: "Window Function Ranking"
+    description: |
+      Using the samples.tpch.orders table, find the order with the highest total price
+      within the '1-URGENT' order priority. What is the o_orderkey of that order?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "4551683"
+    hints:
+      - text: "Use the ROW_NUMBER() or RANK() window function with PARTITION BY on order priority."
+        cost: 35
+      - text: "SELECT o_orderkey FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY o_orderpriority ORDER BY o_totalprice DESC) as rn FROM samples.tpch.orders) WHERE o_orderpriority = '1-URGENT' AND rn = 1"
+        cost: 75
+
+  - id: sql-002
+    title: "Recursive CTE Fibonacci"
+    description: |
+      Write a recursive CTE that generates the first 10 Fibonacci numbers (starting with 1, 1).
+      What is the sum of all 10 numbers in the sequence?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "143"
+    hints:
+      - text: "Use WITH RECURSIVE to build the sequence iteratively."
+        cost: 35
+      - text: "Start with (1,1) and generate (b, a+b) until you have 10 rows."
+        cost: 75
+
+  - id: sql-003
+    title: "Function Catalog Exploration"
+    description: |
+      Databricks SQL includes many built-in functions. Query the system catalog to find
+      how many built-in SQL functions have names starting with 'array_'.
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "24"
+    hints:
+      - text: "System metadata about functions is stored in information_schema."
+        cost: 25
+      - text: "Query system.information_schema.routines and filter by routine_name."
+        cost: 50
+
+  - id: sql-004
+    title: "Query History Deep Dive"
+    description: |
+      Query the system.query.history table to find the most common error_message
+      for failed queries (status = 'FAILED') in the last 30 days. What is the first
+      word of that error message?
+    category: sql
+    points: 150
+    validation_type: regex
+    expected_answer: "^(INVALID|Table|Column|Syntax|Error|Analysis).*"
+    hints:
+      - text: "The query.history system table contains execution details including error messages."
+        cost: 35
+      - text: "GROUP BY error_message and ORDER BY COUNT(*) DESC LIMIT 1."
+        cost: 75
+
+  - id: sql-005
+    title: "Parameterized Widget Query"
+    description: |
+      Create a SQL query using a parameter marker that selects customers from
+      samples.tpch.customer where c_mktsegment equals a parameter value. Execute it
+      with c_mktsegment = 'BUILDING'. How many customers are in that segment?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "30142"
+    hints:
+      - text: "Use :parameter_name syntax or the IDENTIFIER() function for dynamic values."
+        cost: 25
+      - text: "SELECT COUNT(*) FROM samples.tpch.customer WHERE c_mktsegment = :segment"
+        cost: 50
+
+  - id: sql-006
+    title: "PIVOT Transformation"
+    description: |
+      Using samples.tpch.orders, create a PIVOT table showing the count of orders
+      by year (extracted from o_orderdate) as rows and o_orderpriority as columns.
+      How many '1-URGENT' orders were placed in 1995?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "43984"
+    hints:
+      - text: "Use the PIVOT clause after your base SELECT."
+        cost: 35
+      - text: "SELECT * FROM (SELECT YEAR(o_orderdate) as yr, o_orderpriority FROM samples.tpch.orders) PIVOT (COUNT(*) FOR o_orderpriority IN ('1-URGENT', ...))."
+        cost: 75
+
+  - id: sql-007
+    title: "JSON Path Extraction"
+    description: |
+      Create a table with a JSON column containing: {"user": {"name": "alice", "scores": [85, 92, 78]}}.
+      Extract the second score from the scores array. What value do you get?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "92"
+    hints:
+      - text: "Use the : operator or get_json_object() to navigate JSON paths."
+        cost: 35
+      - text: "json_column:user.scores[1] extracts the second element (0-indexed)."
+        cost: 75
+
+  - id: sql-008
+    title: "MERGE with Multiple Conditions"
+    description: |
+      Create a target table with (id INT, value STRING, updated BOOLEAN) containing (1, 'old', false).
+      Create a source table with (1, 'new'). Perform a MERGE that updates matching rows and sets
+      updated=true. After the MERGE, what is the value of the 'value' column for id=1?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "new"
+    hints:
+      - text: "MERGE INTO target USING source ON condition WHEN MATCHED THEN UPDATE SET ..."
+        cost: 35
+      - text: "The WHEN MATCHED clause handles existing rows; set both value and updated columns."
+        cost: 75
+
+  - id: sql-009
+    title: "Aggregate with FILTER"
+    description: |
+      Using samples.tpch.lineitem, calculate the total l_extendedprice for items where
+      l_shipmode = 'AIR' using the FILTER clause (not WHERE). What is the sum rounded
+      to the nearest whole number?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "8585249085"
+    hints:
+      - text: "The FILTER clause applies conditions to specific aggregations."
+        cost: 25
+      - text: "SUM(l_extendedprice) FILTER (WHERE l_shipmode = 'AIR')"
+        cost: 50
+
+  - id: sql-010
+    title: "Query Profile Spill Analysis"
+    description: |
+      Run a query that intentionally causes disk spill by sorting a large dataset with
+      limited memory: SET spark.sql.shuffle.partitions=2; SELECT * FROM samples.nyctaxi.trips
+      ORDER BY trip_distance DESC LIMIT 1000000. In the Query Profile, find the Sort operator.
+      What is the name of the metric that shows bytes written to disk during spill?
+    category: sql
+    points: 200
+    validation_type: regex
+    expected_answer: "spill.*(bytes|size)|disk.*written"
+    hints:
+      - text: "The Query Profile shows detailed metrics for each operator including spill statistics."
+        cost: 50
+      - text: "Look for metrics containing 'spill' in the Sort operator details."
+        cost: 100
+
+  - id: sql-011
+    title: "Dynamic Table Reference"
+    description: |
+      Use the IDENTIFIER() function to dynamically reference a table. Store the string
+      'samples.tpch.nation' in a variable, then use IDENTIFIER() to query that table.
+      How many rows does the nation table contain?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "25"
+    hints:
+      - text: "IDENTIFIER() converts a string to a table/column reference at runtime."
+        cost: 35
+      - text: "SELECT COUNT(*) FROM IDENTIFIER('samples.tpch.nation')"
+        cost: 75
+
+  - id: sql-012
+    title: "Higher-Order Array Transform"
+    description: |
+      Create an array [1, 2, 3, 4, 5] and use the TRANSFORM function to square each element.
+      Then use AGGREGATE to sum the squared values. What is the final result?
+    category: sql
+    points: 200
+    validation_type: exact
+    expected_answer: "55"
+    hints:
+      - text: "TRANSFORM(array, x -> expression) applies a lambda to each element."
+        cost: 50
+      - text: "AGGREGATE(TRANSFORM(array(1,2,3,4,5), x -> x*x), 0, (acc, x) -> acc + x)"
+        cost: 100
+
+  - id: sql-013
+    title: "Lateral View Explode"
+    description: |
+      Create a table with columns (id INT, tags ARRAY<STRING>) containing (1, ['a','b','c']).
+      Use LATERAL VIEW EXPLODE to flatten the tags. How many rows result from the explosion?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "3"
+    hints:
+      - text: "LATERAL VIEW EXPLODE creates one row per array element."
+        cost: 25
+      - text: "SELECT COUNT(*) FROM table LATERAL VIEW EXPLODE(tags) t AS tag"
+        cost: 50
+
+  - id: sql-014
+    title: "Table-Generating Functions"
+    description: |
+      Use the EXPLODE function in the FROM clause (as a table-valued function) with
+      SEQUENCE(1, 5) to generate rows. What is the sum of all generated values?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "15"
+    hints:
+      - text: "SEQUENCE generates an array of integers; EXPLODE converts it to rows."
+        cost: 25
+      - text: "SELECT SUM(col) FROM EXPLODE(SEQUENCE(1, 5))"
+        cost: 50
+
+  - id: sql-015
+    title: "Cross-Catalog Query"
+    description: |
+      The samples catalog contains reference data. Query samples.tpch.region and count
+      how many regions have names containing the letter 'A' (case-insensitive).
+    category: sql
+    points: 200
+    validation_type: exact
+    expected_answer: "4"
+    hints:
+      - text: "Use the three-part name: catalog.schema.table."
+        cost: 50
+      - text: "SELECT COUNT(*) FROM samples.tpch.region WHERE UPPER(r_name) LIKE '%A%'"
+        cost: 100
