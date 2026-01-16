@@ -40,6 +40,41 @@ uv add dependency1 dependency2
 uv sync
 ```
 
+## Changelog Maintenance
+
+This project maintains a **CHANGELOG.md** following the [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) specification.
+
+### When to Update the Changelog
+
+Update the changelog whenever you make notable changes:
+- **Added**: New features or functionality
+- **Changed**: Modifications to existing functionality
+- **Deprecated**: Features marked for future removal
+- **Removed**: Features that have been deleted
+- **Fixed**: Bug fixes
+- **Security**: Vulnerability patches
+
+### Workflow
+
+1. **During development**: Add entries to the `[Unreleased]` section at the top
+2. **Before release**: Move `[Unreleased]` entries to a new version section with the release date
+3. **Version format**: Use semantic versioning (e.g., `[1.2.3] - 2026-01-16`)
+4. **Be specific**: Describe what changed and why it matters to users
+5. **Group similar changes**: Keep related changes together under the same category
+
+### Example Entry
+
+```markdown
+## [Unreleased]
+
+### Added
+- New API endpoint for bulk team registration
+- Export leaderboard data to CSV format
+
+### Fixed
+- Corrected scoring calculation when multiple hints are used
+```
+
 ## Business Purpose
 
 The business purpose is to make learning fun by gamifying learning on the Databricks platform. This app will be the springboard for:
@@ -72,17 +107,18 @@ bd sync               # Sync with git
 
 1. **File issues for remaining work** - Create issues for anything that needs follow-up
 2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
+3. **Update CHANGELOG.md** - Add notable changes to the `[Unreleased]` section
+4. **Update issue status** - Close finished work, update in-progress items
+5. **PUSH TO REMOTE** - This is MANDATORY:
    ```bash
    git pull --rebase
    bd sync
    git push
    git status  # MUST show "up to date with origin"
    ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+6. **Clean up** - Clear stashes, prune remote branches
+7. **Verify** - All changes committed AND pushed
+8. **Hand off** - Provide context for next session
 
 **CRITICAL RULES:**
 - Work is NOT complete until `git push` succeeds
