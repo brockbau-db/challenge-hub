@@ -732,3 +732,233 @@ challenges:
         cost: 25
       - text: "@dlt.expect_or_fail('valid_age', 'age >= 0') above your table definition."
         cost: 50
+
+  # =============================================================================
+  # Platform Administration (admin-001 to admin-015)
+  # =============================================================================
+
+  - id: admin-001
+    title: "Cluster Policy Constraints"
+    description: |
+      Create a cluster policy that restricts the maximum number of workers to 4.
+      What is the exact JSON path (key.subkey format) used to set this constraint?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "num_workers.maxValue"
+    hints:
+      - text: "Cluster policies use a JSON structure with type-specific constraints."
+        cost: 35
+      - text: "Constraints include 'type', 'maxValue', 'minValue', 'value', etc."
+        cost: 75
+
+  - id: admin-002
+    title: "Instance Pool Configuration"
+    description: |
+      Create an instance pool using the Databricks CLI or API. What is the parameter
+      name that specifies the minimum number of idle instances to maintain?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "min_idle_instances"
+    hints:
+      - text: "Instance pools pre-provision instances for faster cluster startup."
+        cost: 25
+      - text: "databricks instance-pools create --help or check API docs for parameter names."
+        cost: 50
+
+  - id: admin-003
+    title: "Init Script Configuration"
+    description: |
+      When configuring a cluster init script stored in a Unity Catalog volume,
+      what is the JSON key name used to specify the script destination?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "volumes"
+    hints:
+      - text: "Init scripts can be stored in workspace, DBFS, ADLS, S3, GCS, or UC volumes."
+        cost: 35
+      - text: "The destination type is specified as a key: 'workspace', 'dbfs', 'volumes', etc."
+        cost: 75
+
+  - id: admin-004
+    title: "Personal Access Token Format"
+    description: |
+      Generate a Personal Access Token (PAT) using the Databricks UI or CLI.
+      What prefix do all Databricks PATs start with?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "dapi"
+    hints:
+      - text: "PATs have a recognizable prefix for identification."
+        cost: 25
+      - text: "The prefix stands for 'Databricks API'."
+        cost: 50
+
+  - id: admin-005
+    title: "Audit Log Action Names"
+    description: |
+      Query system.access.audit to find cluster-related actions. What is the exact
+      actionName value when a user starts an existing cluster (not create)?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "startCluster"
+    hints:
+      - text: "Audit logs use camelCase action names following a verb+noun pattern."
+        cost: 35
+      - text: "SELECT DISTINCT actionName FROM system.access.audit WHERE actionName LIKE '%luster%'"
+        cost: 75
+
+  - id: admin-006
+    title: "Workspace Object Permissions"
+    description: |
+      Using the Databricks CLI, set permissions on a notebook. What are the four
+      valid permission levels for workspace objects in alphabetical order (comma-separated)?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "CAN_EDIT,CAN_MANAGE,CAN_READ,CAN_RUN"
+    hints:
+      - text: "Workspace permissions control who can view, edit, run, or manage objects."
+        cost: 35
+      - text: "databricks workspace get-permissions --help shows available levels."
+        cost: 75
+
+  - id: admin-007
+    title: "Secret Scope Creation"
+    description: |
+      Create a secret scope using the Databricks CLI. After creation, list all scopes.
+      What CLI command lists all secret scopes in the workspace?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "databricks secrets list-scopes"
+    hints:
+      - text: "The secrets CLI has create-scope, list-scopes, put, and other subcommands."
+        cost: 25
+      - text: "databricks secrets --help shows available subcommands."
+        cost: 50
+
+  - id: admin-008
+    title: "Job Cluster Specification"
+    description: |
+      When defining a Databricks job with a job cluster, what is the JSON key name
+      used to specify the Spark version (e.g., '13.3.x-scala2.12')?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "spark_version"
+    hints:
+      - text: "Job clusters use the same configuration structure as interactive clusters."
+        cost: 35
+      - text: "Check the Jobs API documentation for the new_cluster specification."
+        cost: 75
+
+  - id: admin-009
+    title: "SCIM User Lookup"
+    description: |
+      Query the system.access.audit table to find SCIM-related operations.
+      What is the serviceName value for SCIM API calls?
+    category: admin
+    points: 200
+    validation_type: exact
+    expected_answer: "accounts"
+    hints:
+      - text: "SCIM operations appear in audit logs under a specific service."
+        cost: 50
+      - text: "SELECT DISTINCT serviceName FROM system.access.audit WHERE actionName LIKE '%User%'"
+        cost: 100
+
+  - id: admin-010
+    title: "Billing Usage Query"
+    description: |
+      Query system.billing.usage to analyze DBU consumption. What column contains
+      the SKU name that identifies the type of workload (e.g., 'STANDARD_ALL_PURPOSE_COMPUTE')?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "sku_name"
+    hints:
+      - text: "The billing.usage table has columns for workspace, dates, DBUs, and SKU info."
+        cost: 35
+      - text: "DESCRIBE system.billing.usage to see all available columns."
+        cost: 75
+
+  - id: admin-011
+    title: "Metastore Assignment Check"
+    description: |
+      To find which metastore is assigned to your workspace, which system table
+      or view should you query?
+    category: admin
+    points: 200
+    validation_type: exact
+    expected_answer: "system.information_schema.catalogs"
+    hints:
+      - text: "Unity Catalog metastore info is available through system tables."
+        cost: 50
+      - text: "The information_schema contains metadata about catalogs, schemas, and tables."
+        cost: 100
+
+  - id: admin-012
+    title: "IP Access List Format"
+    description: |
+      When configuring an IP access list, what format is used to specify allowed
+      IP addresses? Provide an example entry for allowing a single IP 10.0.0.1.
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "10.0.0.1/32"
+    hints:
+      - text: "IP access lists use CIDR notation."
+        cost: 25
+      - text: "/32 represents a single IP address in CIDR notation."
+        cost: 50
+
+  - id: admin-013
+    title: "Service Principal ID Format"
+    description: |
+      Create a service principal using the Databricks Account Console or API.
+      What is the UUID format of the application_id? Provide the pattern as
+      8-4-4-4-12 where numbers represent hex character counts.
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "8-4-4-4-12"
+    hints:
+      - text: "Service principals use standard UUID format for their application_id."
+        cost: 35
+      - text: "UUIDs are 36 characters: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx."
+        cost: 75
+
+  - id: admin-014
+    title: "System Table Retention Query"
+    description: |
+      System tables have retention policies. Query system.information_schema.tables
+      to find the data_retention_days for system.access.audit. What is the value?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "365"
+    hints:
+      - text: "Information schema contains metadata about all tables including retention."
+        cost: 25
+      - text: "SELECT data_retention_days FROM system.information_schema.tables WHERE table_name = 'audit'"
+        cost: 50
+
+  - id: admin-015
+    title: "Catalog Permission Grant"
+    description: |
+      Grant a user SELECT permission on all tables in a catalog. What SQL command
+      accomplishes this? Start with GRANT and end with the privilege target.
+    category: admin
+    points: 200
+    validation_type: regex
+    expected_answer: "^GRANT\\s+(SELECT|USE CATALOG|ALL PRIVILEGES)\\s+ON\\s+CATALOG.*"
+    hints:
+      - text: "Unity Catalog permissions follow SQL-standard GRANT syntax."
+        cost: 50
+      - text: "GRANT SELECT ON CATALOG catalog_name TO principal."
+        cost: 100
