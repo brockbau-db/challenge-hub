@@ -491,3 +491,244 @@ challenges:
         cost: 50
       - text: "ai_query('catalog.schema.model_name', input_data) runs inference."
         cost: 100
+
+  # =============================================================================
+  # Data Engineering (de-001 to de-015)
+  # =============================================================================
+
+  - id: de-001
+    title: "Delta Table Properties"
+    description: |
+      Create a Delta table with the table property 'delta.autoOptimize.optimizeWrite' = 'true'.
+      Use DESCRIBE DETAIL to inspect the table. What is the format shown in the 'format'
+      column of the output?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "delta"
+    hints:
+      - text: "TBLPROPERTIES clause sets table-level configurations."
+        cost: 25
+      - text: "CREATE TABLE ... TBLPROPERTIES ('delta.autoOptimize.optimizeWrite' = 'true')"
+        cost: 50
+
+  - id: de-002
+    title: "Time Travel Version Query"
+    description: |
+      Create a Delta table with value 'alpha'. Update it to 'beta', then to 'gamma'.
+      Query version 1 of the table. What value do you get?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "beta"
+    hints:
+      - text: "Delta Lake maintains a transaction log enabling queries to past versions."
+        cost: 35
+      - text: "SELECT * FROM table VERSION AS OF 1 (version 0 is initial state)."
+        cost: 75
+
+  - id: de-003
+    title: "VACUUM Dry Run Analysis"
+    description: |
+      Create a Delta table with 5 inserts (separate transactions), then delete all rows.
+      Run VACUUM with RETAIN 0 HOURS and DRY RUN. How many files are identified for deletion?
+      (Note: You may need to disable retention check first.)
+    category: data-engineering
+    points: 150
+    validation_type: regex
+    expected_answer: "^[5-9]|[1-9][0-9]+$"
+    hints:
+      - text: "VACUUM removes files no longer referenced by the Delta log."
+        cost: 35
+      - text: "SET spark.databricks.delta.retentionDurationCheck.enabled = false; VACUUM table RETAIN 0 HOURS DRY RUN"
+        cost: 75
+
+  - id: de-004
+    title: "Z-Order Optimization"
+    description: |
+      Create a Delta table with columns (id INT, category STRING, value DOUBLE) and insert
+      1000 rows. Run OPTIMIZE with Z-ORDER on the 'category' column. In DESCRIBE HISTORY,
+      what is the 'operation' value for this action?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "OPTIMIZE"
+    hints:
+      - text: "OPTIMIZE compacts small files and can co-locate related data."
+        cost: 35
+      - text: "OPTIMIZE table ZORDER BY (category); then DESCRIBE HISTORY table."
+        cost: 75
+
+  - id: de-005
+    title: "Liquid Clustering Setup"
+    description: |
+      Create a Delta table with liquid clustering on column 'region':
+      CREATE TABLE ... CLUSTER BY (region). Query DESCRIBE DETAIL on the table.
+      What is the exact key name in the output that shows clustering columns?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "clusteringColumns"
+    hints:
+      - text: "Liquid clustering is the next-gen replacement for Z-ORDER."
+        cost: 35
+      - text: "DESCRIBE DETAIL returns a row with multiple metadata fields including clustering info."
+        cost: 75
+
+  - id: de-006
+    title: "Change Data Feed Tracking"
+    description: |
+      Create a Delta table with Change Data Feed enabled (TBLPROPERTIES 'delta.enableChangeDataFeed'='true').
+      Insert a row, update it, then delete it. Query the changes using table_changes().
+      How many distinct values appear in the _change_type column?
+    category: data-engineering
+    points: 200
+    validation_type: exact
+    expected_answer: "3"
+    hints:
+      - text: "CDF tracks insert, update_preimage, update_postimage, and delete operations."
+        cost: 50
+      - text: "SELECT DISTINCT _change_type FROM table_changes('table', 0)"
+        cost: 100
+
+  - id: de-007
+    title: "Shallow Clone Creation"
+    description: |
+      Create a Delta table with some data, then create a SHALLOW CLONE of it.
+      Compare DESCRIBE DETAIL output for both tables. What metadata field shows
+      the clone's relationship to the source?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "cloneSourceURI"
+    hints:
+      - text: "SHALLOW CLONE shares data files with the source table."
+        cost: 25
+      - text: "CREATE TABLE clone SHALLOW CLONE source; then check DESCRIBE DETAIL clone."
+        cost: 50
+
+  - id: de-008
+    title: "Schema Evolution with Merge"
+    description: |
+      Create a target Delta table with (id INT, name STRING). Set 'delta.autoMerge' = 'true'.
+      Merge a source with (id INT, name STRING, email STRING). After merge, how many
+      columns does the target table have?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "3"
+    hints:
+      - text: "Auto schema evolution allows MERGE to add new columns from source."
+        cost: 35
+      - text: "SET spark.databricks.delta.schema.autoMerge.enabled = true before MERGE."
+        cost: 75
+
+  - id: de-009
+    title: "Check Constraint Validation"
+    description: |
+      Create a Delta table with column 'age INT'. Add a check constraint ensuring age > 0.
+      Query information_schema.table_constraints for your table. What is the exact value
+      of the constraint_type column?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "CHECK"
+    hints:
+      - text: "ALTER TABLE table ADD CONSTRAINT name CHECK (condition)."
+        cost: 25
+      - text: "Query information_schema.table_constraints filtering by your table name."
+        cost: 50
+
+  - id: de-010
+    title: "Delta History Metrics"
+    description: |
+      Perform an INSERT of 1000 rows into a Delta table, then query DESCRIBE HISTORY.
+      In the operationMetrics column for the INSERT operation, what is the key name
+      that shows the number of rows written?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "numOutputRows"
+    hints:
+      - text: "operationMetrics is a map containing detailed statistics about each operation."
+        cost: 25
+      - text: "SELECT operationMetrics FROM (DESCRIBE HISTORY table) WHERE operation = 'WRITE'"
+        cost: 50
+
+  - id: de-011
+    title: "Streaming Checkpoint Location"
+    description: |
+      Start a structured streaming query reading from a Delta table. You must specify
+      a checkpoint location. What method/option name do you use to set the checkpoint
+      location in the writeStream configuration?
+    category: data-engineering
+    points: 200
+    validation_type: exact
+    expected_answer: "checkpointLocation"
+    hints:
+      - text: "Streaming queries use checkpoints to track progress for fault tolerance."
+        cost: 50
+      - text: ".option('checkpointLocation', '/path') or .writeStream.option(...)"
+        cost: 100
+
+  - id: de-012
+    title: "Delta Sharing Recipient"
+    description: |
+      To share Delta tables externally, you create a SHARE and add RECIPIENT(s).
+      What SQL command creates a new recipient for Delta Sharing?
+    category: data-engineering
+    points: 200
+    validation_type: regex
+    expected_answer: "^CREATE\\s+RECIPIENT.*"
+    hints:
+      - text: "Delta Sharing uses shares, recipients, and providers as key objects."
+        cost: 50
+      - text: "CREATE RECIPIENT recipient_name; then GRANT SELECT ON SHARE share TO RECIPIENT recipient_name."
+        cost: 100
+
+  - id: de-013
+    title: "Unity Catalog Lineage Query"
+    description: |
+      Unity Catalog tracks data lineage in system tables. Which system table contains
+      information about upstream dependencies (tables that feed into other tables)?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "system.access.table_lineage"
+    hints:
+      - text: "System tables in Unity Catalog are under the 'system' catalog."
+        cost: 35
+      - text: "Lineage information is in the 'access' schema alongside audit logs."
+        cost: 75
+
+  - id: de-014
+    title: "External Location Setup"
+    description: |
+      External locations in Unity Catalog point to cloud storage. When creating an
+      external location, what is the parameter name for specifying the cloud storage
+      URL (e.g., s3://bucket/path)?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "URL"
+    hints:
+      - text: "CREATE EXTERNAL LOCATION requires a name, URL, and storage credential."
+        cost: 35
+      - text: "CREATE EXTERNAL LOCATION loc_name URL 's3://...' WITH (STORAGE CREDENTIAL cred_name)"
+        cost: 75
+
+  - id: de-015
+    title: "DLT Expectation Syntax"
+    description: |
+      In Delta Live Tables, expectations validate data quality. Write an expectation
+      that fails the pipeline if any row has age < 0. What decorator/function name
+      is used to define this expectation in Python?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "@dlt.expect_or_fail"
+    hints:
+      - text: "DLT provides expect, expect_or_warn, expect_or_drop, and expect_or_fail."
+        cost: 25
+      - text: "@dlt.expect_or_fail('valid_age', 'age >= 0') above your table definition."
+        cost: 50
