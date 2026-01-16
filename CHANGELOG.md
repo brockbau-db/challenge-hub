@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-01-16
+
+### Added
+- 60 hands-on Databricks challenges across 4 categories (15 each):
+  - SQL & Analytics: window functions, CTEs, JSON, MERGE, query profiling
+  - AI & Machine Learning: MLflow, model serving, vector search, AI functions
+  - Data Engineering: Delta Lake, time travel, CDC, Unity Catalog lineage
+  - Platform Administration: cluster policies, audit logs, permissions, billing
+- YAML-based challenge storage format for easier content management
+- PyYAML dependency for challenge loading
+
+### Changed
+- Refactored challenges.py to load from challenges.yaml instead of hardcoded Python
+- Challenge categories updated: renamed 'ml' to 'ai_ml' for broader AI/ML coverage
+
 ## [0.2.0] - 2026-01-15
 
 ### Added
@@ -56,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Basic project structure
 - Git configuration and .gitignore
 
-[Unreleased]: https://github.com/brockbau-db/challenge-hub/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/brockbau-db/challenge-hub/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/brockbau-db/challenge-hub/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/brockbau-db/challenge-hub/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/brockbau-db/challenge-hub/compare/v0.0.0...v0.1.0
 [0.0.0]: https://github.com/brockbau-db/challenge-hub/releases/tag/v0.0.0

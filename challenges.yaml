@@ -1,0 +1,964 @@
+version: "1.0"
+
+categories:
+  - id: sql
+    name: SQL & Analytics
+  - id: ai_ml
+    name: AI & Machine Learning
+  - id: data-engineering
+    name: Data Engineering
+  - id: admin
+    name: Platform Administration
+
+challenges:
+  # =============================================================================
+  # SQL & Analytics (sql-001 to sql-015)
+  # =============================================================================
+
+  - id: sql-001
+    title: "Window Function Ranking"
+    description: |
+      Using the samples.tpch.orders table, find the order with the highest total price
+      within the '1-URGENT' order priority. What is the o_orderkey of that order?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "4551683"
+    hints:
+      - text: "Use the ROW_NUMBER() or RANK() window function with PARTITION BY on order priority."
+        cost: 35
+      - text: "SELECT o_orderkey FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY o_orderpriority ORDER BY o_totalprice DESC) as rn FROM samples.tpch.orders) WHERE o_orderpriority = '1-URGENT' AND rn = 1"
+        cost: 75
+
+  - id: sql-002
+    title: "Recursive CTE Fibonacci"
+    description: |
+      Write a recursive CTE that generates the first 10 Fibonacci numbers (starting with 1, 1).
+      What is the sum of all 10 numbers in the sequence?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "143"
+    hints:
+      - text: "Use WITH RECURSIVE to build the sequence iteratively."
+        cost: 35
+      - text: "Start with (1,1) and generate (b, a+b) until you have 10 rows."
+        cost: 75
+
+  - id: sql-003
+    title: "Function Catalog Exploration"
+    description: |
+      Databricks SQL includes many built-in functions. Query the system catalog to find
+      how many built-in SQL functions have names starting with 'array_'.
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "24"
+    hints:
+      - text: "System metadata about functions is stored in information_schema."
+        cost: 25
+      - text: "Query system.information_schema.routines and filter by routine_name."
+        cost: 50
+
+  - id: sql-004
+    title: "Query History Deep Dive"
+    description: |
+      Query the system.query.history table to find the most common error_message
+      for failed queries (status = 'FAILED') in the last 30 days. What is the first
+      word of that error message?
+    category: sql
+    points: 150
+    validation_type: regex
+    expected_answer: "^(INVALID|Table|Column|Syntax|Error|Analysis).*"
+    hints:
+      - text: "The query.history system table contains execution details including error messages."
+        cost: 35
+      - text: "GROUP BY error_message and ORDER BY COUNT(*) DESC LIMIT 1."
+        cost: 75
+
+  - id: sql-005
+    title: "Parameterized Widget Query"
+    description: |
+      Create a SQL query using a parameter marker that selects customers from
+      samples.tpch.customer where c_mktsegment equals a parameter value. Execute it
+      with c_mktsegment = 'BUILDING'. How many customers are in that segment?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "30142"
+    hints:
+      - text: "Use :parameter_name syntax or the IDENTIFIER() function for dynamic values."
+        cost: 25
+      - text: "SELECT COUNT(*) FROM samples.tpch.customer WHERE c_mktsegment = :segment"
+        cost: 50
+
+  - id: sql-006
+    title: "PIVOT Transformation"
+    description: |
+      Using samples.tpch.orders, create a PIVOT table showing the count of orders
+      by year (extracted from o_orderdate) as rows and o_orderpriority as columns.
+      How many '1-URGENT' orders were placed in 1995?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "43984"
+    hints:
+      - text: "Use the PIVOT clause after your base SELECT."
+        cost: 35
+      - text: "SELECT * FROM (SELECT YEAR(o_orderdate) as yr, o_orderpriority FROM samples.tpch.orders) PIVOT (COUNT(*) FOR o_orderpriority IN ('1-URGENT', ...))."
+        cost: 75
+
+  - id: sql-007
+    title: "JSON Path Extraction"
+    description: |
+      Create a table with a JSON column containing: {"user": {"name": "alice", "scores": [85, 92, 78]}}.
+      Extract the second score from the scores array. What value do you get?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "92"
+    hints:
+      - text: "Use the : operator or get_json_object() to navigate JSON paths."
+        cost: 35
+      - text: "json_column:user.scores[1] extracts the second element (0-indexed)."
+        cost: 75
+
+  - id: sql-008
+    title: "MERGE with Multiple Conditions"
+    description: |
+      Create a target table with (id INT, value STRING, updated BOOLEAN) containing (1, 'old', false).
+      Create a source table with (1, 'new'). Perform a MERGE that updates matching rows and sets
+      updated=true. After the MERGE, what is the value of the 'value' column for id=1?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "new"
+    hints:
+      - text: "MERGE INTO target USING source ON condition WHEN MATCHED THEN UPDATE SET ..."
+        cost: 35
+      - text: "The WHEN MATCHED clause handles existing rows; set both value and updated columns."
+        cost: 75
+
+  - id: sql-009
+    title: "Aggregate with FILTER"
+    description: |
+      Using samples.tpch.lineitem, calculate the total l_extendedprice for items where
+      l_shipmode = 'AIR' using the FILTER clause (not WHERE). What is the sum rounded
+      to the nearest whole number?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "8585249085"
+    hints:
+      - text: "The FILTER clause applies conditions to specific aggregations."
+        cost: 25
+      - text: "SUM(l_extendedprice) FILTER (WHERE l_shipmode = 'AIR')"
+        cost: 50
+
+  - id: sql-010
+    title: "Query Profile Spill Analysis"
+    description: |
+      Run a query that intentionally causes disk spill by sorting a large dataset with
+      limited memory: SET spark.sql.shuffle.partitions=2; SELECT * FROM samples.nyctaxi.trips
+      ORDER BY trip_distance DESC LIMIT 1000000. In the Query Profile, find the Sort operator.
+      What is the name of the metric that shows bytes written to disk during spill?
+    category: sql
+    points: 200
+    validation_type: regex
+    expected_answer: "spill.*(bytes|size)|disk.*written"
+    hints:
+      - text: "The Query Profile shows detailed metrics for each operator including spill statistics."
+        cost: 50
+      - text: "Look for metrics containing 'spill' in the Sort operator details."
+        cost: 100
+
+  - id: sql-011
+    title: "Dynamic Table Reference"
+    description: |
+      Use the IDENTIFIER() function to dynamically reference a table. Store the string
+      'samples.tpch.nation' in a variable, then use IDENTIFIER() to query that table.
+      How many rows does the nation table contain?
+    category: sql
+    points: 150
+    validation_type: exact
+    expected_answer: "25"
+    hints:
+      - text: "IDENTIFIER() converts a string to a table/column reference at runtime."
+        cost: 35
+      - text: "SELECT COUNT(*) FROM IDENTIFIER('samples.tpch.nation')"
+        cost: 75
+
+  - id: sql-012
+    title: "Higher-Order Array Transform"
+    description: |
+      Create an array [1, 2, 3, 4, 5] and use the TRANSFORM function to square each element.
+      Then use AGGREGATE to sum the squared values. What is the final result?
+    category: sql
+    points: 200
+    validation_type: exact
+    expected_answer: "55"
+    hints:
+      - text: "TRANSFORM(array, x -> expression) applies a lambda to each element."
+        cost: 50
+      - text: "AGGREGATE(TRANSFORM(array(1,2,3,4,5), x -> x*x), 0, (acc, x) -> acc + x)"
+        cost: 100
+
+  - id: sql-013
+    title: "Lateral View Explode"
+    description: |
+      Create a table with columns (id INT, tags ARRAY<STRING>) containing (1, ['a','b','c']).
+      Use LATERAL VIEW EXPLODE to flatten the tags. How many rows result from the explosion?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "3"
+    hints:
+      - text: "LATERAL VIEW EXPLODE creates one row per array element."
+        cost: 25
+      - text: "SELECT COUNT(*) FROM table LATERAL VIEW EXPLODE(tags) t AS tag"
+        cost: 50
+
+  - id: sql-014
+    title: "Table-Generating Functions"
+    description: |
+      Use the EXPLODE function in the FROM clause (as a table-valued function) with
+      SEQUENCE(1, 5) to generate rows. What is the sum of all generated values?
+    category: sql
+    points: 100
+    validation_type: exact
+    expected_answer: "15"
+    hints:
+      - text: "SEQUENCE generates an array of integers; EXPLODE converts it to rows."
+        cost: 25
+      - text: "SELECT SUM(col) FROM EXPLODE(SEQUENCE(1, 5))"
+        cost: 50
+
+  - id: sql-015
+    title: "Cross-Catalog Query"
+    description: |
+      The samples catalog contains reference data. Query samples.tpch.region and count
+      how many regions have names containing the letter 'A' (case-insensitive).
+    category: sql
+    points: 200
+    validation_type: exact
+    expected_answer: "4"
+    hints:
+      - text: "Use the three-part name: catalog.schema.table."
+        cost: 50
+      - text: "SELECT COUNT(*) FROM samples.tpch.region WHERE UPPER(r_name) LIKE '%A%'"
+        cost: 100
+
+  # =============================================================================
+  # AI & Machine Learning (ai_ml-001 to ai_ml-015)
+  # =============================================================================
+
+  - id: ai_ml-001
+    title: "MLflow Experiment Creation"
+    description: |
+      Create a new MLflow experiment named 'challenge_experiment_001' using the MLflow API.
+      Start a run, log a metric called 'accuracy' with value 0.95, and end the run.
+      What is the run_id format prefix (first 8 characters are letters/numbers)?
+    category: ai_ml
+    points: 100
+    validation_type: regex
+    expected_answer: "^[a-f0-9]{8}.*"
+    hints:
+      - text: "Use mlflow.set_experiment() and mlflow.start_run() to create runs."
+        cost: 25
+      - text: "The run_id is a 32-character hex string; access it via run.info.run_id."
+        cost: 50
+
+  - id: ai_ml-002
+    title: "Model Registry Stages"
+    description: |
+      In the MLflow Model Registry, registered models can be in different stages.
+      Using the MLflow UI or API, list all valid stage names for a model version.
+      What are the four stages in alphabetical order, comma-separated (no spaces)?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "Archived,None,Production,Staging"
+    hints:
+      - text: "Model stages control the lifecycle from development to production."
+        cost: 35
+      - text: "Check mlflow.tracking.MlflowClient().get_model_version_stages() or the docs."
+        cost: 75
+
+  - id: ai_ml-003
+    title: "Feature Table Inspection"
+    description: |
+      Create a feature table using Feature Engineering in Unity Catalog. Create a table
+      'feature_challenge_003' with a primary key column 'user_id' and a feature 'age'.
+      Use the Feature Engineering client to inspect the table. What is the exact
+      data type of the primary_keys attribute (list, tuple, etc.)?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "list"
+    hints:
+      - text: "Use fe = FeatureEngineeringClient() and fe.create_table()."
+        cost: 35
+      - text: "Inspect with fe.get_table('catalog.schema.table').primary_keys and check type()."
+        cost: 75
+
+  - id: ai_ml-004
+    title: "AutoML Classification"
+    description: |
+      Run AutoML classification on samples.nyctaxi.trips predicting whether fare_amount > 20.
+      Set max_trials=5 and timeout_minutes=5. What metric does AutoML optimize by default
+      for binary classification?
+    category: ai_ml
+    points: 200
+    validation_type: regex
+    expected_answer: "^(f1|F1|roc_auc|ROC_AUC|auc).*"
+    hints:
+      - text: "AutoML automatically selects an appropriate metric based on problem type."
+        cost: 50
+      - text: "Check the experiment's primary_metric in the AutoML summary or use databricks.automl.classify()."
+        cost: 100
+
+  - id: ai_ml-005
+    title: "Model Serving Endpoint"
+    description: |
+      Using the Databricks SDK or REST API, list the available endpoint config options
+      for a model serving endpoint. What is the JSON key name for specifying the
+      minimum number of instances to scale down to?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "min_provisioned_throughput"
+    hints:
+      - text: "Model serving endpoints have scale-to-zero and throughput configurations."
+        cost: 35
+      - text: "Check the served_entities configuration in the API docs."
+        cost: 75
+
+  - id: ai_ml-006
+    title: "NYC Taxi Fare Analysis"
+    description: |
+      Using samples.nyctaxi.trips, calculate the average fare_amount for trips where
+      the pickup occurred in zip code '10001' and the trip distance was greater than 2 miles.
+      Round your answer to 2 decimal places.
+    category: ai_ml
+    points: 100
+    validation_type: exact
+    expected_answer: "14.87"
+    hints:
+      - text: "Filter by pickup_zip and trip_distance, then compute AVG(fare_amount)."
+        cost: 25
+      - text: "SELECT ROUND(AVG(fare_amount), 2) FROM samples.nyctaxi.trips WHERE pickup_zip = '10001' AND trip_distance > 2"
+        cost: 50
+
+  - id: ai_ml-007
+    title: "Vector Search Embedding Dimensions"
+    description: |
+      Databricks provides foundation model APIs for generating embeddings. Use the
+      ai_query function with the databricks-bge-large-en model to embed the text 'hello world'.
+      How many dimensions does the resulting embedding vector have?
+    category: ai_ml
+    points: 200
+    validation_type: exact
+    expected_answer: "1024"
+    hints:
+      - text: "Use SELECT ai_query('databricks-bge-large-en', 'hello world') to get embeddings."
+        cost: 50
+      - text: "The BGE-large model produces 1024-dimensional embeddings; verify with SIZE() function."
+        cost: 100
+
+  - id: ai_ml-008
+    title: "Foundation Model SQL Query"
+    description: |
+      Use the ai_query() SQL function to ask the databricks-meta-llama-3-1-70b-instruct
+      model: 'What is 2+2? Reply with just the number.' Hash the response using MD5.
+      What are the first 8 characters of the hash?
+    category: ai_ml
+    points: 150
+    validation_type: regex
+    expected_answer: "^[a-f0-9]{8}.*"
+    hints:
+      - text: "ai_query() returns the model's text response which you can then hash."
+        cost: 35
+      - text: "SELECT MD5(ai_query('databricks-meta-llama-3-1-70b-instruct', 'What is 2+2? Reply with just the number.'))"
+        cost: 75
+
+  - id: ai_ml-009
+    title: "MLflow Artifact Logging"
+    description: |
+      Create an MLflow run and log a simple text file as an artifact. The file should
+      contain 'challenge_009'. After logging, list the artifacts for the run.
+      What is the exact artifact_path shown for your logged file?
+    category: ai_ml
+    points: 100
+    validation_type: regex
+    expected_answer: ".*\\.txt$"
+    hints:
+      - text: "Use mlflow.log_artifact(local_path) to log files."
+        cost: 25
+      - text: "List with client.list_artifacts(run_id); the path is relative to the artifacts root."
+        cost: 50
+
+  - id: ai_ml-010
+    title: "Hyperparameter Logging and Retrieval"
+    description: |
+      Create an MLflow run and log these hyperparameters: learning_rate=0.01, epochs=100,
+      batch_size=32. Use the MLflow client to retrieve the run and sum all three
+      hyperparameter values. What is the sum?
+    category: ai_ml
+    points: 100
+    validation_type: exact
+    expected_answer: "132.01"
+    hints:
+      - text: "Use mlflow.log_params() or mlflow.log_param() to log hyperparameters."
+        cost: 25
+      - text: "Retrieve with client.get_run(run_id).data.params; values are strings, convert to float."
+        cost: 50
+
+  - id: ai_ml-011
+    title: "Model Signature Schema"
+    description: |
+      Create a simple sklearn LogisticRegression model, train it on sample data, and
+      infer its signature using mlflow.models.infer_signature(). What is the 'type'
+      value for the first input column in the signature's input schema?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "double"
+    hints:
+      - text: "infer_signature(X, y) analyzes the data to create input/output schemas."
+        cost: 35
+      - text: "Access signature.inputs.to_dict() to see the schema structure."
+        cost: 75
+
+  - id: ai_ml-012
+    title: "Experiment Run Comparison"
+    description: |
+      Create two MLflow runs in the same experiment. Log metric 'score' = 0.8 in run1
+      and 'score' = 0.9 in run2. Use search_runs() to find the run with the highest score.
+      What parameter do you pass to order_by to sort by score descending?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "metrics.score DESC"
+    hints:
+      - text: "search_runs() accepts an order_by parameter for sorting results."
+        cost: 35
+      - text: "Format is 'metrics.<name> DESC' or 'params.<name> ASC'."
+        cost: 75
+
+  - id: ai_ml-013
+    title: "AI Functions for Sentiment"
+    description: |
+      Use the ai_analyze_sentiment() SQL function to analyze the text 'I love Databricks!'.
+      What sentiment label is returned?
+    category: ai_ml
+    points: 150
+    validation_type: regex
+    expected_answer: "^[Pp]ositive$"
+    hints:
+      - text: "ai_analyze_sentiment() is a built-in AI function for sentiment analysis."
+        cost: 35
+      - text: "SELECT ai_analyze_sentiment('I love Databricks!')"
+        cost: 75
+
+  - id: ai_ml-014
+    title: "MLflow Model Artifact Directory"
+    description: |
+      Log a sklearn model using mlflow.sklearn.log_model() with artifact_path='model'.
+      List the contents of the logged model artifact directory. What is the name of the
+      YAML file that contains the model metadata?
+    category: ai_ml
+    points: 100
+    validation_type: exact
+    expected_answer: "MLmodel"
+    hints:
+      - text: "MLflow stores model metadata in a standardized format."
+        cost: 25
+      - text: "The MLmodel file (no extension shown but it's YAML) describes model flavor and signature."
+        cost: 50
+
+  - id: ai_ml-015
+    title: "Batch Inference with Model"
+    description: |
+      Register a simple sklearn model to Unity Catalog, then use ai_query() with your
+      registered model to score new data. What SQL function wraps your registered model
+      for inference?
+    category: ai_ml
+    points: 200
+    validation_type: exact
+    expected_answer: "ai_query"
+    hints:
+      - text: "Unity Catalog registered models can be invoked via SQL functions."
+        cost: 50
+      - text: "ai_query('catalog.schema.model_name', input_data) runs inference."
+        cost: 100
+
+  # =============================================================================
+  # Data Engineering (de-001 to de-015)
+  # =============================================================================
+
+  - id: de-001
+    title: "Delta Table Properties"
+    description: |
+      Create a Delta table with the table property 'delta.autoOptimize.optimizeWrite' = 'true'.
+      Use DESCRIBE DETAIL to inspect the table. What is the format shown in the 'format'
+      column of the output?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "delta"
+    hints:
+      - text: "TBLPROPERTIES clause sets table-level configurations."
+        cost: 25
+      - text: "CREATE TABLE ... TBLPROPERTIES ('delta.autoOptimize.optimizeWrite' = 'true')"
+        cost: 50
+
+  - id: de-002
+    title: "Time Travel Version Query"
+    description: |
+      Create a Delta table with value 'alpha'. Update it to 'beta', then to 'gamma'.
+      Query version 1 of the table. What value do you get?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "beta"
+    hints:
+      - text: "Delta Lake maintains a transaction log enabling queries to past versions."
+        cost: 35
+      - text: "SELECT * FROM table VERSION AS OF 1 (version 0 is initial state)."
+        cost: 75
+
+  - id: de-003
+    title: "VACUUM Dry Run Analysis"
+    description: |
+      Create a Delta table with 5 inserts (separate transactions), then delete all rows.
+      Run VACUUM with RETAIN 0 HOURS and DRY RUN. How many files are identified for deletion?
+      (Note: You may need to disable retention check first.)
+    category: data-engineering
+    points: 150
+    validation_type: regex
+    expected_answer: "^[5-9]|[1-9][0-9]+$"
+    hints:
+      - text: "VACUUM removes files no longer referenced by the Delta log."
+        cost: 35
+      - text: "SET spark.databricks.delta.retentionDurationCheck.enabled = false; VACUUM table RETAIN 0 HOURS DRY RUN"
+        cost: 75
+
+  - id: de-004
+    title: "Z-Order Optimization"
+    description: |
+      Create a Delta table with columns (id INT, category STRING, value DOUBLE) and insert
+      1000 rows. Run OPTIMIZE with Z-ORDER on the 'category' column. In DESCRIBE HISTORY,
+      what is the 'operation' value for this action?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "OPTIMIZE"
+    hints:
+      - text: "OPTIMIZE compacts small files and can co-locate related data."
+        cost: 35
+      - text: "OPTIMIZE table ZORDER BY (category); then DESCRIBE HISTORY table."
+        cost: 75
+
+  - id: de-005
+    title: "Liquid Clustering Setup"
+    description: |
+      Create a Delta table with liquid clustering on column 'region':
+      CREATE TABLE ... CLUSTER BY (region). Query DESCRIBE DETAIL on the table.
+      What is the exact key name in the output that shows clustering columns?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "clusteringColumns"
+    hints:
+      - text: "Liquid clustering is the next-gen replacement for Z-ORDER."
+        cost: 35
+      - text: "DESCRIBE DETAIL returns a row with multiple metadata fields including clustering info."
+        cost: 75
+
+  - id: de-006
+    title: "Change Data Feed Tracking"
+    description: |
+      Create a Delta table with Change Data Feed enabled (TBLPROPERTIES 'delta.enableChangeDataFeed'='true').
+      Insert a row, update it, then delete it. Query the changes using table_changes().
+      How many distinct values appear in the _change_type column?
+    category: data-engineering
+    points: 200
+    validation_type: exact
+    expected_answer: "3"
+    hints:
+      - text: "CDF tracks insert, update_preimage, update_postimage, and delete operations."
+        cost: 50
+      - text: "SELECT DISTINCT _change_type FROM table_changes('table', 0)"
+        cost: 100
+
+  - id: de-007
+    title: "Shallow Clone Creation"
+    description: |
+      Create a Delta table with some data, then create a SHALLOW CLONE of it.
+      Compare DESCRIBE DETAIL output for both tables. What metadata field shows
+      the clone's relationship to the source?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "cloneSourceURI"
+    hints:
+      - text: "SHALLOW CLONE shares data files with the source table."
+        cost: 25
+      - text: "CREATE TABLE clone SHALLOW CLONE source; then check DESCRIBE DETAIL clone."
+        cost: 50
+
+  - id: de-008
+    title: "Schema Evolution with Merge"
+    description: |
+      Create a target Delta table with (id INT, name STRING). Set 'delta.autoMerge' = 'true'.
+      Merge a source with (id INT, name STRING, email STRING). After merge, how many
+      columns does the target table have?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "3"
+    hints:
+      - text: "Auto schema evolution allows MERGE to add new columns from source."
+        cost: 35
+      - text: "SET spark.databricks.delta.schema.autoMerge.enabled = true before MERGE."
+        cost: 75
+
+  - id: de-009
+    title: "Check Constraint Validation"
+    description: |
+      Create a Delta table with column 'age INT'. Add a check constraint ensuring age > 0.
+      Query information_schema.table_constraints for your table. What is the exact value
+      of the constraint_type column?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "CHECK"
+    hints:
+      - text: "ALTER TABLE table ADD CONSTRAINT name CHECK (condition)."
+        cost: 25
+      - text: "Query information_schema.table_constraints filtering by your table name."
+        cost: 50
+
+  - id: de-010
+    title: "Delta History Metrics"
+    description: |
+      Perform an INSERT of 1000 rows into a Delta table, then query DESCRIBE HISTORY.
+      In the operationMetrics column for the INSERT operation, what is the key name
+      that shows the number of rows written?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "numOutputRows"
+    hints:
+      - text: "operationMetrics is a map containing detailed statistics about each operation."
+        cost: 25
+      - text: "SELECT operationMetrics FROM (DESCRIBE HISTORY table) WHERE operation = 'WRITE'"
+        cost: 50
+
+  - id: de-011
+    title: "Streaming Checkpoint Location"
+    description: |
+      Start a structured streaming query reading from a Delta table. You must specify
+      a checkpoint location. What method/option name do you use to set the checkpoint
+      location in the writeStream configuration?
+    category: data-engineering
+    points: 200
+    validation_type: exact
+    expected_answer: "checkpointLocation"
+    hints:
+      - text: "Streaming queries use checkpoints to track progress for fault tolerance."
+        cost: 50
+      - text: ".option('checkpointLocation', '/path') or .writeStream.option(...)"
+        cost: 100
+
+  - id: de-012
+    title: "Delta Sharing Recipient"
+    description: |
+      To share Delta tables externally, you create a SHARE and add RECIPIENT(s).
+      What SQL command creates a new recipient for Delta Sharing?
+    category: data-engineering
+    points: 200
+    validation_type: regex
+    expected_answer: "^CREATE\\s+RECIPIENT.*"
+    hints:
+      - text: "Delta Sharing uses shares, recipients, and providers as key objects."
+        cost: 50
+      - text: "CREATE RECIPIENT recipient_name; then GRANT SELECT ON SHARE share TO RECIPIENT recipient_name."
+        cost: 100
+
+  - id: de-013
+    title: "Unity Catalog Lineage Query"
+    description: |
+      Unity Catalog tracks data lineage in system tables. Which system table contains
+      information about upstream dependencies (tables that feed into other tables)?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "system.access.table_lineage"
+    hints:
+      - text: "System tables in Unity Catalog are under the 'system' catalog."
+        cost: 35
+      - text: "Lineage information is in the 'access' schema alongside audit logs."
+        cost: 75
+
+  - id: de-014
+    title: "External Location Setup"
+    description: |
+      External locations in Unity Catalog point to cloud storage. When creating an
+      external location, what is the parameter name for specifying the cloud storage
+      URL (e.g., s3://bucket/path)?
+    category: data-engineering
+    points: 150
+    validation_type: exact
+    expected_answer: "URL"
+    hints:
+      - text: "CREATE EXTERNAL LOCATION requires a name, URL, and storage credential."
+        cost: 35
+      - text: "CREATE EXTERNAL LOCATION loc_name URL 's3://...' WITH (STORAGE CREDENTIAL cred_name)"
+        cost: 75
+
+  - id: de-015
+    title: "DLT Expectation Syntax"
+    description: |
+      In Delta Live Tables, expectations validate data quality. Write an expectation
+      that fails the pipeline if any row has age < 0. What decorator/function name
+      is used to define this expectation in Python?
+    category: data-engineering
+    points: 100
+    validation_type: exact
+    expected_answer: "@dlt.expect_or_fail"
+    hints:
+      - text: "DLT provides expect, expect_or_warn, expect_or_drop, and expect_or_fail."
+        cost: 25
+      - text: "@dlt.expect_or_fail('valid_age', 'age >= 0') above your table definition."
+        cost: 50
+
+  # =============================================================================
+  # Platform Administration (admin-001 to admin-015)
+  # =============================================================================
+
+  - id: admin-001
+    title: "Cluster Policy Constraints"
+    description: |
+      Create a cluster policy that restricts the maximum number of workers to 4.
+      What is the exact JSON path (key.subkey format) used to set this constraint?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "num_workers.maxValue"
+    hints:
+      - text: "Cluster policies use a JSON structure with type-specific constraints."
+        cost: 35
+      - text: "Constraints include 'type', 'maxValue', 'minValue', 'value', etc."
+        cost: 75
+
+  - id: admin-002
+    title: "Instance Pool Configuration"
+    description: |
+      Create an instance pool using the Databricks CLI or API. What is the parameter
+      name that specifies the minimum number of idle instances to maintain?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "min_idle_instances"
+    hints:
+      - text: "Instance pools pre-provision instances for faster cluster startup."
+        cost: 25
+      - text: "databricks instance-pools create --help or check API docs for parameter names."
+        cost: 50
+
+  - id: admin-003
+    title: "Init Script Configuration"
+    description: |
+      When configuring a cluster init script stored in a Unity Catalog volume,
+      what is the JSON key name used to specify the script destination?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "volumes"
+    hints:
+      - text: "Init scripts can be stored in workspace, DBFS, ADLS, S3, GCS, or UC volumes."
+        cost: 35
+      - text: "The destination type is specified as a key: 'workspace', 'dbfs', 'volumes', etc."
+        cost: 75
+
+  - id: admin-004
+    title: "Personal Access Token Format"
+    description: |
+      Generate a Personal Access Token (PAT) using the Databricks UI or CLI.
+      What prefix do all Databricks PATs start with?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "dapi"
+    hints:
+      - text: "PATs have a recognizable prefix for identification."
+        cost: 25
+      - text: "The prefix stands for 'Databricks API'."
+        cost: 50
+
+  - id: admin-005
+    title: "Audit Log Action Names"
+    description: |
+      Query system.access.audit to find cluster-related actions. What is the exact
+      actionName value when a user starts an existing cluster (not create)?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "startCluster"
+    hints:
+      - text: "Audit logs use camelCase action names following a verb+noun pattern."
+        cost: 35
+      - text: "SELECT DISTINCT actionName FROM system.access.audit WHERE actionName LIKE '%luster%'"
+        cost: 75
+
+  - id: admin-006
+    title: "Workspace Object Permissions"
+    description: |
+      Using the Databricks CLI, set permissions on a notebook. What are the four
+      valid permission levels for workspace objects in alphabetical order (comma-separated)?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "CAN_EDIT,CAN_MANAGE,CAN_READ,CAN_RUN"
+    hints:
+      - text: "Workspace permissions control who can view, edit, run, or manage objects."
+        cost: 35
+      - text: "databricks workspace get-permissions --help shows available levels."
+        cost: 75
+
+  - id: admin-007
+    title: "Secret Scope Creation"
+    description: |
+      Create a secret scope using the Databricks CLI. After creation, list all scopes.
+      What CLI command lists all secret scopes in the workspace?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "databricks secrets list-scopes"
+    hints:
+      - text: "The secrets CLI has create-scope, list-scopes, put, and other subcommands."
+        cost: 25
+      - text: "databricks secrets --help shows available subcommands."
+        cost: 50
+
+  - id: admin-008
+    title: "Job Cluster Specification"
+    description: |
+      When defining a Databricks job with a job cluster, what is the JSON key name
+      used to specify the Spark version (e.g., '13.3.x-scala2.12')?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "spark_version"
+    hints:
+      - text: "Job clusters use the same configuration structure as interactive clusters."
+        cost: 35
+      - text: "Check the Jobs API documentation for the new_cluster specification."
+        cost: 75
+
+  - id: admin-009
+    title: "SCIM User Lookup"
+    description: |
+      Query the system.access.audit table to find SCIM-related operations.
+      What is the serviceName value for SCIM API calls?
+    category: admin
+    points: 200
+    validation_type: exact
+    expected_answer: "accounts"
+    hints:
+      - text: "SCIM operations appear in audit logs under a specific service."
+        cost: 50
+      - text: "SELECT DISTINCT serviceName FROM system.access.audit WHERE actionName LIKE '%User%'"
+        cost: 100
+
+  - id: admin-010
+    title: "Billing Usage Query"
+    description: |
+      Query system.billing.usage to analyze DBU consumption. What column contains
+      the SKU name that identifies the type of workload (e.g., 'STANDARD_ALL_PURPOSE_COMPUTE')?
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "sku_name"
+    hints:
+      - text: "The billing.usage table has columns for workspace, dates, DBUs, and SKU info."
+        cost: 35
+      - text: "DESCRIBE system.billing.usage to see all available columns."
+        cost: 75
+
+  - id: admin-011
+    title: "Metastore Assignment Check"
+    description: |
+      To find which metastore is assigned to your workspace, which system table
+      or view should you query?
+    category: admin
+    points: 200
+    validation_type: exact
+    expected_answer: "system.information_schema.catalogs"
+    hints:
+      - text: "Unity Catalog metastore info is available through system tables."
+        cost: 50
+      - text: "The information_schema contains metadata about catalogs, schemas, and tables."
+        cost: 100
+
+  - id: admin-012
+    title: "IP Access List Format"
+    description: |
+      When configuring an IP access list, what format is used to specify allowed
+      IP addresses? Provide an example entry for allowing a single IP 10.0.0.1.
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "10.0.0.1/32"
+    hints:
+      - text: "IP access lists use CIDR notation."
+        cost: 25
+      - text: "/32 represents a single IP address in CIDR notation."
+        cost: 50
+
+  - id: admin-013
+    title: "Service Principal ID Format"
+    description: |
+      Create a service principal using the Databricks Account Console or API.
+      What is the UUID format of the application_id? Provide the pattern as
+      8-4-4-4-12 where numbers represent hex character counts.
+    category: admin
+    points: 150
+    validation_type: exact
+    expected_answer: "8-4-4-4-12"
+    hints:
+      - text: "Service principals use standard UUID format for their application_id."
+        cost: 35
+      - text: "UUIDs are 36 characters: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx."
+        cost: 75
+
+  - id: admin-014
+    title: "System Table Retention Query"
+    description: |
+      System tables have retention policies. Query system.information_schema.tables
+      to find the data_retention_days for system.access.audit. What is the value?
+    category: admin
+    points: 100
+    validation_type: exact
+    expected_answer: "365"
+    hints:
+      - text: "Information schema contains metadata about all tables including retention."
+        cost: 25
+      - text: "SELECT data_retention_days FROM system.information_schema.tables WHERE table_name = 'audit'"
+        cost: 50
+
+  - id: admin-015
+    title: "Catalog Permission Grant"
+    description: |
+      Grant a user SELECT permission on all tables in a catalog. What SQL command
+      accomplishes this? Start with GRANT and end with the privilege target.
+    category: admin
+    points: 200
+    validation_type: regex
+    expected_answer: "^GRANT\\s+(SELECT|USE CATALOG|ALL PRIVILEGES)\\s+ON\\s+CATALOG.*"
+    hints:
+      - text: "Unity Catalog permissions follow SQL-standard GRANT syntax."
+        cost: 50
+      - text: "GRANT SELECT ON CATALOG catalog_name TO principal."
+        cost: 100
