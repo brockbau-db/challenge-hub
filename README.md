@@ -51,14 +51,15 @@ curl -X DELETE http://localhost:8000/teams/{team_id}
 ```bash
 # Create an event
 curl -X POST http://localhost:8000/events \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "SQL Challenge",
-    "description": "Test your SQL skills",
-    "start_time": "2025-01-07T09:00:00Z",
-    "end_time": "2025-01-07T17:00:00Z",
-    "challenge_ids": ["sql-001", "sql-002"]
-  }'
+    -H "Content-Type: application/json" \
+    -d '{
+      "name": "Demo Challenge Event",
+      "description": "A demo event for testing the Challenge Hub",
+      "start_time": "2025-01-14T00:00:00Z",
+      "end_time": "2027-01-02T00:00:00Z",
+      "max_team_size": 5,
+      "challenge_ids": ["sql-001", "sql-002", "ml-001", "de-001", "admin-001"]
+    }'
 
 # List events
 curl http://localhost:8000/events
