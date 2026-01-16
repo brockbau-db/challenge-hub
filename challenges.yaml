@@ -247,3 +247,247 @@ challenges:
         cost: 50
       - text: "SELECT COUNT(*) FROM samples.tpch.region WHERE UPPER(r_name) LIKE '%A%'"
         cost: 100
+
+  # =============================================================================
+  # AI & Machine Learning (ai_ml-001 to ai_ml-015)
+  # =============================================================================
+
+  - id: ai_ml-001
+    title: "MLflow Experiment Creation"
+    description: |
+      Create a new MLflow experiment named 'challenge_experiment_001' using the MLflow API.
+      Start a run, log a metric called 'accuracy' with value 0.95, and end the run.
+      What is the run_id format prefix (first 8 characters are letters/numbers)?
+    category: ai_ml
+    points: 100
+    validation_type: regex
+    expected_answer: "^[a-f0-9]{8}.*"
+    hints:
+      - text: "Use mlflow.set_experiment() and mlflow.start_run() to create runs."
+        cost: 25
+      - text: "The run_id is a 32-character hex string; access it via run.info.run_id."
+        cost: 50
+
+  - id: ai_ml-002
+    title: "Model Registry Stages"
+    description: |
+      In the MLflow Model Registry, registered models can be in different stages.
+      Using the MLflow UI or API, list all valid stage names for a model version.
+      What are the four stages in alphabetical order, comma-separated (no spaces)?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "Archived,None,Production,Staging"
+    hints:
+      - text: "Model stages control the lifecycle from development to production."
+        cost: 35
+      - text: "Check mlflow.tracking.MlflowClient().get_model_version_stages() or the docs."
+        cost: 75
+
+  - id: ai_ml-003
+    title: "Feature Table Inspection"
+    description: |
+      Create a feature table using Feature Engineering in Unity Catalog. Create a table
+      'feature_challenge_003' with a primary key column 'user_id' and a feature 'age'.
+      Use the Feature Engineering client to inspect the table. What is the exact
+      data type of the primary_keys attribute (list, tuple, etc.)?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "list"
+    hints:
+      - text: "Use fe = FeatureEngineeringClient() and fe.create_table()."
+        cost: 35
+      - text: "Inspect with fe.get_table('catalog.schema.table').primary_keys and check type()."
+        cost: 75
+
+  - id: ai_ml-004
+    title: "AutoML Classification"
+    description: |
+      Run AutoML classification on samples.nyctaxi.trips predicting whether fare_amount > 20.
+      Set max_trials=5 and timeout_minutes=5. What metric does AutoML optimize by default
+      for binary classification?
+    category: ai_ml
+    points: 200
+    validation_type: regex
+    expected_answer: "^(f1|F1|roc_auc|ROC_AUC|auc).*"
+    hints:
+      - text: "AutoML automatically selects an appropriate metric based on problem type."
+        cost: 50
+      - text: "Check the experiment's primary_metric in the AutoML summary or use databricks.automl.classify()."
+        cost: 100
+
+  - id: ai_ml-005
+    title: "Model Serving Endpoint"
+    description: |
+      Using the Databricks SDK or REST API, list the available endpoint config options
+      for a model serving endpoint. What is the JSON key name for specifying the
+      minimum number of instances to scale down to?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "min_provisioned_throughput"
+    hints:
+      - text: "Model serving endpoints have scale-to-zero and throughput configurations."
+        cost: 35
+      - text: "Check the served_entities configuration in the API docs."
+        cost: 75
+
+  - id: ai_ml-006
+    title: "NYC Taxi Fare Analysis"
+    description: |
+      Using samples.nyctaxi.trips, calculate the average fare_amount for trips where
+      the pickup occurred in zip code '10001' and the trip distance was greater than 2 miles.
+      Round your answer to 2 decimal places.
+    category: ai_ml
+    points: 100
+    validation_type: exact
+    expected_answer: "14.87"
+    hints:
+      - text: "Filter by pickup_zip and trip_distance, then compute AVG(fare_amount)."
+        cost: 25
+      - text: "SELECT ROUND(AVG(fare_amount), 2) FROM samples.nyctaxi.trips WHERE pickup_zip = '10001' AND trip_distance > 2"
+        cost: 50
+
+  - id: ai_ml-007
+    title: "Vector Search Embedding Dimensions"
+    description: |
+      Databricks provides foundation model APIs for generating embeddings. Use the
+      ai_query function with the databricks-bge-large-en model to embed the text 'hello world'.
+      How many dimensions does the resulting embedding vector have?
+    category: ai_ml
+    points: 200
+    validation_type: exact
+    expected_answer: "1024"
+    hints:
+      - text: "Use SELECT ai_query('databricks-bge-large-en', 'hello world') to get embeddings."
+        cost: 50
+      - text: "The BGE-large model produces 1024-dimensional embeddings; verify with SIZE() function."
+        cost: 100
+
+  - id: ai_ml-008
+    title: "Foundation Model SQL Query"
+    description: |
+      Use the ai_query() SQL function to ask the databricks-meta-llama-3-1-70b-instruct
+      model: 'What is 2+2? Reply with just the number.' Hash the response using MD5.
+      What are the first 8 characters of the hash?
+    category: ai_ml
+    points: 150
+    validation_type: regex
+    expected_answer: "^[a-f0-9]{8}.*"
+    hints:
+      - text: "ai_query() returns the model's text response which you can then hash."
+        cost: 35
+      - text: "SELECT MD5(ai_query('databricks-meta-llama-3-1-70b-instruct', 'What is 2+2? Reply with just the number.'))"
+        cost: 75
+
+  - id: ai_ml-009
+    title: "MLflow Artifact Logging"
+    description: |
+      Create an MLflow run and log a simple text file as an artifact. The file should
+      contain 'challenge_009'. After logging, list the artifacts for the run.
+      What is the exact artifact_path shown for your logged file?
+    category: ai_ml
+    points: 100
+    validation_type: regex
+    expected_answer: ".*\\.txt$"
+    hints:
+      - text: "Use mlflow.log_artifact(local_path) to log files."
+        cost: 25
+      - text: "List with client.list_artifacts(run_id); the path is relative to the artifacts root."
+        cost: 50
+
+  - id: ai_ml-010
+    title: "Hyperparameter Logging and Retrieval"
+    description: |
+      Create an MLflow run and log these hyperparameters: learning_rate=0.01, epochs=100,
+      batch_size=32. Use the MLflow client to retrieve the run and sum all three
+      hyperparameter values. What is the sum?
+    category: ai_ml
+    points: 100
+    validation_type: exact
+    expected_answer: "132.01"
+    hints:
+      - text: "Use mlflow.log_params() or mlflow.log_param() to log hyperparameters."
+        cost: 25
+      - text: "Retrieve with client.get_run(run_id).data.params; values are strings, convert to float."
+        cost: 50
+
+  - id: ai_ml-011
+    title: "Model Signature Schema"
+    description: |
+      Create a simple sklearn LogisticRegression model, train it on sample data, and
+      infer its signature using mlflow.models.infer_signature(). What is the 'type'
+      value for the first input column in the signature's input schema?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "double"
+    hints:
+      - text: "infer_signature(X, y) analyzes the data to create input/output schemas."
+        cost: 35
+      - text: "Access signature.inputs.to_dict() to see the schema structure."
+        cost: 75
+
+  - id: ai_ml-012
+    title: "Experiment Run Comparison"
+    description: |
+      Create two MLflow runs in the same experiment. Log metric 'score' = 0.8 in run1
+      and 'score' = 0.9 in run2. Use search_runs() to find the run with the highest score.
+      What parameter do you pass to order_by to sort by score descending?
+    category: ai_ml
+    points: 150
+    validation_type: exact
+    expected_answer: "metrics.score DESC"
+    hints:
+      - text: "search_runs() accepts an order_by parameter for sorting results."
+        cost: 35
+      - text: "Format is 'metrics.<name> DESC' or 'params.<name> ASC'."
+        cost: 75
+
+  - id: ai_ml-013
+    title: "AI Functions for Sentiment"
+    description: |
+      Use the ai_analyze_sentiment() SQL function to analyze the text 'I love Databricks!'.
+      What sentiment label is returned?
+    category: ai_ml
+    points: 150
+    validation_type: regex
+    expected_answer: "^[Pp]ositive$"
+    hints:
+      - text: "ai_analyze_sentiment() is a built-in AI function for sentiment analysis."
+        cost: 35
+      - text: "SELECT ai_analyze_sentiment('I love Databricks!')"
+        cost: 75
+
+  - id: ai_ml-014
+    title: "MLflow Model Artifact Directory"
+    description: |
+      Log a sklearn model using mlflow.sklearn.log_model() with artifact_path='model'.
+      List the contents of the logged model artifact directory. What is the name of the
+      YAML file that contains the model metadata?
+    category: ai_ml
+    points: 100
+    validation_type: exact
+    expected_answer: "MLmodel"
+    hints:
+      - text: "MLflow stores model metadata in a standardized format."
+        cost: 25
+      - text: "The MLmodel file (no extension shown but it's YAML) describes model flavor and signature."
+        cost: 50
+
+  - id: ai_ml-015
+    title: "Batch Inference with Model"
+    description: |
+      Register a simple sklearn model to Unity Catalog, then use ai_query() with your
+      registered model to score new data. What SQL function wraps your registered model
+      for inference?
+    category: ai_ml
+    points: 200
+    validation_type: exact
+    expected_answer: "ai_query"
+    hints:
+      - text: "Unity Catalog registered models can be invoked via SQL functions."
+        cost: 50
+      - text: "ai_query('catalog.schema.model_name', input_data) runs inference."
+        cost: 100
